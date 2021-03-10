@@ -19,7 +19,8 @@ jobs:
       - name: Build
         env:
           SERVICE_NAME: ${{ secrets.SERVICE_NAME }}
-          IMAGE_LABEL: ${{ secrets.IMAGE_LABEL }}    
+          IMAGE_LABEL: ${{ secrets.IMAGE_LABEL }} 
+          APP_KEY: ${{ secrets.APP_KEY }}
         run: |
           sudo curl "https://s3.us-west-2.amazonaws.com/lightsailctl/latest/linux-amd64/lightsailctl" -o "/usr/local/bin/lightsailctl"
           sudo chmod +x /usr/local/bin/lightsailctl
@@ -27,3 +28,5 @@ jobs:
           docker --version
           docker build --quiet . -t my-laravel-app
           aws lightsail push-container-image --service-name $SERVICE_NAME --label $IMAGE_LABEL --image my-laravel-app
+          IMAGE_NAME=$(aws lightsail get-container-images --service-name $SERVICE_NAME | jq -r .containerImages[0].image)
+          DEPLOYMENT_JSON=$(jq -n --arg APP_KEY $APP_KEY --arg SERVICE_NAME $SERVICE_NAME --arg IMAGE_NAME $IMAGE_NAME -f deploy/deployment.template.jq)
